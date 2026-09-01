@@ -1,0 +1,10 @@
+product_id,product_name,category,description,price,stock,rating,tags,upsell_product,cross_sell_product
+P001,Goa Explorer Package,Travel,"3 days and 2 nights Goa travel package",14999,20,4.5,"goa,beach,budget,3-day",P002,P005
+P002,Premium Hotel Upgrade,Hotel,"Premium hotel room upgrade for the Goa package",1999,15,4.7,"hotel,premium,goa,upgrade",,P005
+P003,Manali Adventure Package,Travel,"4 days and 3 nights Manali adventure trip",17999,15,4.6,"manali,mountains,adventure,4-day",P004,P006
+P004,Deluxe Hotel Upgrade,Hotel,"Deluxe mountain-view hotel upgrade",2499,10,4.8,"hotel,deluxe,manali,upgrade",,P006
+P005,Airport Transfer,Transport,"Private airport pickup and drop service",799,30,4.4,"airport,transfer,transport",, 
+P006,Adventure Activity Pass,Activity,"Adventure activities including rafting and trekking",1499,25,4.7,"adventure,activity,rafting,trekking",,
+P007,Jaipur Heritage Package,Travel,"3 days and 2 nights Jaipur heritage experience",12999,20,4.5,"jaipur,heritage,culture,3-day",P008,P009
+P008,Royal Hotel Upgrade,Hotel,"Premium heritage hotel upgrade in Jaipur",1799,12,4.6,"hotel,royal,jaipur,upgrade",,P009
+P009,Local Tour Pass,Activity,"Guided local sightseeing and heritage tour",999,25,4.5,"jaipur,tour,sightseeing,heritage",,
