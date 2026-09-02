@@ -1,95 +1,83 @@
-from services.catalog_service import CatalogService
 from agents.intent_agent import IntentAgent
+from services.catalog_service import CatalogService
 
 
 class RecommendationAgent:
 
     def __init__(self):
         self.catalog = CatalogService()
+        self.intent_agent = IntentAgent()
 
     def recommend(self, intent):
 
-        # No customer information = no recommendation
-        if (
-            not intent["destination"]
-            and not intent["budget"]
-            and not intent["duration_days"]
-        ):
-            return None
-
-        products = self.catalog.get_all_products().copy()
+        products = self.catalog.get_all_products()
 
         # Only travel packages
-        products = products[
-            products["category"].str.lower() == "travel"
+        products = [
+            p for p in products
+            if str(p.get("category", "")).lower() == "travel"
         ]
 
+        destination = intent.get("destination")
+        budget = intent.get("budget")
+        duration = intent.get("duration_days")
+
         # Destination filter
-        if intent["destination"]:
-            destination = intent["destination"].lower()
+        if destination:
+            destination = destination.lower()
 
-            products = products[
-                products["tags"]
-                .str.lower()
-                .str.contains(destination, na=False)
-            ]
-
-        # Duration filter
-        if intent["duration_days"]:
-            duration = intent["duration_days"]
-
-            products = products[
-                products["description"]
-                .str.lower()
-                .str.contains(
-                    f"{duration} days",
-                    na=False
-                )
+            products = [
+                p for p in products
+                if destination in str(p.get("tags", "")).lower()
+                or destination in str(p.get("product_name", "")).lower()
+                or destination in str(p.get("description", "")).lower()
             ]
 
         # Budget filter
-        if intent["budget"]:
-            products = products[
-                products["price"] <= intent["budget"]
+        if budget:
+            products = [
+                p for p in products
+                if float(p.get("price", 0)) <= float(budget)
             ]
 
-        # No matching product
-        if products.empty:
+        # Duration filter
+        if duration:
+
+            duration_text = f"{duration}-day"
+
+            filtered = [
+                p for p in products
+                if duration_text in str(p.get("tags", "")).lower()
+            ]
+
+            # Don't fail completely if duration is not in tags
+            if filtered:
+                products = filtered
+
+        if not products:
             return None
 
-        # Highest rated matching product
-        products = products.sort_values(
-            by="rating",
-            ascending=False
+        # Highest rated product
+        products.sort(
+            key=lambda p: float(p.get("rating", 0)),
+            reverse=True
         )
 
-        return products.iloc[0].to_dict()
+        return products[0]
 
 
 if __name__ == "__main__":
 
-    intent_agent = IntentAgent()
-    recommendation_agent = RecommendationAgent()
+    agent = RecommendationAgent()
 
-    message = input("\nEnter customer request: ")
+    intent = {
+        "destination": "goa",
+        "budget": 18000,
+        "duration_days": 3,
+        "category": "travel"
+    }
 
-    intent = intent_agent.extract_intent(message)
-
-    print("\nDetected Intent:")
-    print(intent)
-
-    recommendation = recommendation_agent.recommend(intent)
+    result = agent.recommend(intent)
 
     print("\nRecommended Product:")
-
-    if recommendation:
-        print(
-            f"""
-Product: {recommendation['product_name']}
-Price: ₹{recommendation['price']}
-Rating: ⭐ {recommendation['rating']}
-Description: {recommendation['description']}
-"""
-        )
-    else:
-        print("Sorry, no matching product found.")
+    print(result)

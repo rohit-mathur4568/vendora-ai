@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Vendora AI</title>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b0f19;
+    color: white;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 30px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.logo {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.badge {
+    background: #182235;
+    padding: 8px 15px;
+    border-radius: 20px;
+    color: #7dd3fc;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 25px;
+}
+
+.chat-box,
+.cart-box {
+    background: #111827;
+    border: 1px solid #263244;
+    border-radius: 18px;
+    padding: 20px;
+}
+
+.messages {
+    min-height: 500px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.message {
+    padding: 14px;
+    margin: 10px 0;
+    border-radius: 12px;
+    max-width: 80%;
+}
+
+.user {
+    background: #2563eb;
+    margin-left: auto;
+}
+
+.ai {
+    background: #1f2937;
+}
+
+.input-area {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+input {
+    flex: 1;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #374151;
+    background: #0f172a;
+    color: white;
+}
+
+button {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background: #2563eb;
+    color: white;
+    font-weight: bold;
+}
+
+button:hover {
+    opacity: 0.85;
+}
+
+.product {
+    border: 1px solid #374151;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 12px;
+}
+
+.price {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.recommendation {
+    background: #172033;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+.pay {
+    width: 100%;
+    margin-top: 20px;
+    background: #16a34a;
+    font-size: 16px;
+}
+
+.success {
+    color: #4ade80;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+
+<div class="logo">
+🛒 Vendora AI
+</div>
+
+<div class="badge">
+AI-Powered Agentic Commerce
+</div>
+
+</div>
+
+<div class="layout">
+
+<div class="chat-box">
+
+<h2>AI Shopping Agent</h2>
+
+<div id="messages" class="messages">
+
+<div class="message ai">
+👋 Hi! I'm Vendora AI.<br><br>
+Tell me what you're looking for and I'll find the best option for you.
+</div>
+
+</div>
+
+<div class="input-area">
+
+<input
+id="message"
+placeholder="Example: I want a Goa trip under 18k..."
+/>
+
+<button onclick="sendMessage()">
+Send
+</button>
+
+</div>
+
+</div>
+
+
+<div class="cart-box">
+
+<h2>🛒 Cart</h2>
+
+<div id="cart">
+
+Your cart is empty.
+    
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+let currentResult = null;
+
+
+function addMessage(text, type) {
+
+    const messages = document.getElementById("messages");
+
+    const div = document.createElement("div");
+
+    div.className = "message " + type;
+
+    div.innerHTML = text;
+
+    messages.appendChild(div);
+
+    messages.scrollTop = messages.scrollHeight;
+}
+
+
+async function sendMessage() {
+
+    const input = document.getElementById("message");
+
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    addMessage(message, "user");
+
+    input.value = "";
+
+    addMessage("🤖 Thinking...", "ai");
+
+    const response = await fetch("/api/chat", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            message: message
+        })
+
+    });
+
+    const result = await response.json();
+
+    const messages = document.getElementById("messages");
+
+    messages.removeChild(messages.lastChild);
+
+    if (!result.success) {
+
+        addMessage(
+            "❌ " + result.message,
+            "ai"
+        );
+
+        return;
+    }
+
+    currentResult = result;
+
+    let html = `
+    
+    <strong>🎯 I found the best match for you!</strong>
+
+    <div class="product">
+
+        <h3>${result.product.product_name}</h3>
+
+        <p>${result.product.description}</p>
+
+        <div class="price">
+            ₹${result.product.price}
+        </div>
+
+        ⭐ ${result.product.rating}
+
+    </div>
+    
+    `;
+
+
+    if (result.suggestions.upsell) {
+
+        const item = result.suggestions.upsell;
+
+        html += `
+        
+        <div class="recommendation">
+
+        ⬆️ <strong>Smart Upgrade</strong>
+
+        <br><br>
+
+        ${item.product_name}
+
+        <br>
+
+        ₹${item.price}
+
+        <br><br>
+
+        <button onclick='addProduct(${JSON.stringify(item)})'>
+        Add Upgrade
+        </button>
+
+        </div>
+        
+        `;
+    }
+
+
+    if (result.suggestions.cross_sell) {
+
+        const item = result.suggestions.cross_sell;
+
+        html += `
+        
+        <div class="recommendation">
+
+        ➕ <strong>Recommended Add-on</strong>
+
+        <br><br>
+
+        ${item.product_name}
+
+        <br>
+
+        ₹${item.price}
+
+        <br><br>
+
+        <button onclick='addProduct(${JSON.stringify(item)})'>
+        Add Add-on
+        </button>
+
+        </div>
+        
+        `;
+    }
+
+
+    addMessage(html, "ai");
+
+    updateCart();
+
+}
+
+
+async function addProduct(product) {
+
+    await fetch("/api/cart/add", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify(product)
+
+    });
+
+    updateCart();
+
+}
+
+
+async function updateCart() {
+
+    const response = await fetch("/api/cart");
+
+    const cart = await response.json();
+
+    const container = document.getElementById("cart");
+
+    if (!cart.items.length) {
+
+        container.innerHTML =
+            "Your cart is empty.";
+
+        return;
+    }
+
+
+    let html = "";
+
+    cart.items.forEach(item => {
+
+        html += `
+        
+        <div class="product">
+
+        <strong>
+        ${item.product_name}
+        </strong>
+
+        <br>
+
+        ₹${item.price}
+
+        </div>
+
+        `;
+
+    });
+
+
+    html += `
+
+    <hr>
+
+    <h3>
+    Total: ₹${cart.total}
+    </h3>
+
+    <button class="pay" onclick="payNow()">
+    💳 Proceed to Razorpay
+    </button>
+
+    `;
+
+    container.innerHTML = html;
+
+}
+
+
+async function payNow() {
+
+    const cartResponse = await fetch("/api/cart");
+
+    const cart = await cartResponse.json();
+
+    if (!cart.items.length) {
+
+        alert("Cart is empty.");
+
+        return;
+    }
+
+
+    const response = await fetch(
+        "/api/payment/create-order",
+        {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                amount: cart.total
+            })
+
+        }
+    );
+
+
+    const order = await response.json();
+
+
+    const options = {
+
+        key: order.key_id,
+
+        amount: order.amount,
+
+        currency: order.currency,
+
+        name: "Vendora AI",
+
+        description: "AI Powered Commerce",
+
+        order_id: order.order_id,
+
+        handler: async function(response) {
+
+            const verifyResponse = await fetch(
+                "/api/payment/verify",
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        razorpay_order_id:
+                            response.razorpay_order_id,
+
+                        razorpay_payment_id:
+                            response.razorpay_payment_id,
+
+                        razorpay_signature:
+                            response.razorpay_signature
+
+                    })
+
+                }
+            );
+
+
+            const result =
+                await verifyResponse.json();
+
+
+            if (result.success) {
+
+                addMessage(
+                    `
+                    <span class="success">
+                    ✅ Payment verified successfully!
+                    <br><br>
+                    Order ID: ${result.order_id}
+                    <br>
+                    Payment ID: ${result.payment_id}
+                    <br>
+                    Amount: ₹${result.amount}
+                    </span>
+                    `,
+                    "ai"
+                );
+
+            } else {
+
+                addMessage(
+                    "❌ Payment verification failed.",
+                    "ai"
+                );
+
+            }
+
+        }
+
+    };
+
+
+    const razorpay =
+        new Razorpay(options);
+
+    razorpay.open();
+
+}
+
+
+document
+    .getElementById("message")
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (event.key === "Enter") {
+
+                sendMessage();
+
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+
+</html>

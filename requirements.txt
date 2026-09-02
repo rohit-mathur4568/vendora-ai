@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+pandas
+razorpay
+python-dotenv
+pydantic
