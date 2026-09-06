@@ -80,4 +80,4 @@ if __name__ == "__main__":
     result = agent.recommend(intent)
 
     print("\nRecommended Product:")
-    print(result)
+    print(result) 
